@@ -6,6 +6,8 @@
 
 同时也提供反向能力 `formate`：把 Leafer 对象序列化回 SVG 字符串，可与 `parse` 组成「SVG ⇄ Leafer」双向转换。无 SVG 对应语义的能力会**降级处理**（几何近似为 `path` 等），降级不了的直接**舍弃**，并把每次降级 / 舍弃记录到结果中（详见 [Leafer → SVG（formate）](#leafer--svgformate)）。
 
+[演示地址](http://static.pxrun.com/demo/index.html)
+
 ![示例页面：浏览器原生 SVG 与扁平化 / 层级化解析三栏对比](./examples/preview.png)
 
 ## 特性
