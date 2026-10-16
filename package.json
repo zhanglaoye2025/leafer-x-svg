@@ -1,7 +1,7 @@
 {
   "name": "leafer-x-svg",
   "version": "0.1.0",
-  "description": "Parse SVG strings into Leafer UI objects. Ported from the fabric.js SVG parser.",
+  "description": "Parse SVG strings to Leafer objects and Formate Leafer objects to SVG strings",
   "type": "module",
   "main": "./dist/leafer-x-svg.umd.cjs",
   "module": "./dist/leafer-x-svg.js",
