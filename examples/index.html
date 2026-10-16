@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>leafer-x-svg · SVG 解析示例</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f2f4f7;
+      font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: #2c3e50;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 4px;
+    }
+
+    .tip {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin: 0 0 12px;
+    }
+
+    .tip code {
+      background: #e8eef3;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .editor {
+      background: #fff;
+      border: 1px solid #d5dbe0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .editor .bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .editor .bar label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .editor .bar .spacer {
+      flex: 1;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      resize: vertical;
+      font: 12px/1.5 Consolas, Monaco, monospace;
+      color: #2c3e50;
+      border: 1px solid #d5dbe0;
+      border-radius: 6px;
+      padding: 10px;
+      outline: none;
+      tab-size: 2;
+    }
+
+    textarea:focus {
+      border-color: #4a90d9;
+    }
+
+    button {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid #4a90d9;
+      background: #4a90d9;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3b7dc0;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: #4a90d9;
+    }
+
+    button.secondary:hover {
+      background: #eef4fb;
+    }
+
+    .error {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #fdecea;
+      border: 1px solid #f5c6c0;
+      border-radius: 6px;
+      color: #c0392b;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .panels {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .col {
+      flex: 1 1 320px;
+      min-width: 300px;
+    }
+
+    .col h2 {
+      font-size: 13px;
+      text-align: center;
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+
+    .col h2 small {
+      display: block;
+      font-weight: 400;
+      color: #7f8c8d;
+    }
+
+    .box {
+      background: #fff;
+      border: 1px solid #d5dbe0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .box svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .col pre {
+      margin: 8px 0 0;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid #d5dbe0;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 140px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>leafer-x-svg 解析示例</h1>
+  <p class="tip">
+    在下方编辑或粘贴自定义 SVG 字符串，点击「运行」（或 <code>Ctrl + Enter</code>）后，
+    三栏分别展示：浏览器原生渲染（基准）、<code>flatten: true</code> 扁平化解析、<code>flatten: false</code> 层级化解析。
+  </p>
+
+  <div class="editor">
+    <div class="bar">
+      <label>SVG 字符串</label>
+      <div class="spacer"></div>
+      <button class="secondary" id="resetBtn">恢复默认</button>
+      <button id="runBtn">运行</button>
+    </div>
+    <textarea id="svgInput" spellcheck="false"></textarea>
+    <div class="error" id="errorBox"></div>
+  </div>
+
+  <div class="panels">
+    <div class="col">
+      <h2>1. 浏览器原生 SVG<small>渲染基准</small></h2>
+      <div class="box" id="nativeBox"></div>
+    </div>
+    <div class="col">
+      <h2>2. 扁平化解析<small>parse(svg, { flatten: true })</small></h2>
+      <div class="box" id="flatBox"></div>
+      <pre id="flatInfo">结构：-</pre>
+    </div>
+    <div class="col">
+      <h2>3. 层级化解析<small>parse(svg, { flatten: false })</small></h2>
+      <div class="box" id="hierBox"></div>
+      <pre id="hierInfo">结构：-</pre>
+    </div>
+  </div>
+
+  <script src="./web.js"></script>
+  <script src="./leafer-x-svg.umd.cjs"></script>
+  <script>
+    const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="360" viewBox="0 0 400 360">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6d365"/>
+      <stop offset="100%" stop-color="#fda085"/>
+    </linearGradient>
+    <radialGradient id="rg" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#a1c4fd"/>
+      <stop offset="100%" stop-color="#2471a3"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(65,55) rotate(30)" opacity="0.8">
+    <g transform="scale(1.1)">
+      <rect x="0" y="0" width="60" height="40" fill="#e74c3c"/>
+    </g>
+  </g>
+  <rect x="150" y="30" width="70" height="50" rx="12" ry="12" fill="#3498db" stroke="#1a5276" stroke-width="4" stroke-dasharray="8 4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="250" y="30" width="80" height="50" rx="20" ry="10" fill="#2ecc71" stroke="#145a32" stroke-width="3"/>
+  <circle cx="55" cy="150" r="35" fill="#f39c12" stroke="#7e5109" stroke-width="5" stroke-dasharray="6 6"/>
+  <ellipse cx="165" cy="150" rx="50" ry="30" fill="#9b59b6" stroke="#4a235a" stroke-width="4" fill-opacity="0.7"/>
+  <line x1="250" y1="120" x2="360" y2="180" stroke="#e67e22" stroke-width="6" stroke-linecap="square"/>
+  <polyline points="250,195 280,165 310,195 340,165 370,195" fill="none" stroke="#16a085" stroke-width="4" stroke-linecap="round" stroke-linejoin="bevel"/>
+  <polygon points="320,215 375,215 348,270" fill="#c0392b" stroke="#7b241c" stroke-width="3"/>
+  <rect x="30" y="215" width="90" height="60" fill="url(#lg)" stroke="#b7950b" stroke-width="2"/>
+  <circle cx="165" cy="245" r="35" fill="url(#rg)" stroke="#1a5276" stroke-width="3"/>
+  <path d="M40 295 L130 295 L130 355 L40 355 Z M65 315 L105 315 L105 340 L65 340 Z" fill="#1abc9c" fill-rule="evenodd" stroke="#0e6655" stroke-width="2"/>
+  <text x="250" y="305" font-family="Arial" font-size="22" font-weight="bold" fill="#2c3e50">Bold 22px</text>
+  <text x="250" y="345" font-family="Arial" font-size="20" font-style="italic" text-decoration="underline" fill="#8e44ad" text-anchor="middle">anchor middle</text>
+</svg>`;
+
+    const input = document.getElementById('svgInput');
+    const errorBox = document.getElementById('errorBox');
+    const leaferInstances = [];
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.style.display = message ? 'block' : 'none';
+    }
+
+    function clearLeafers() {
+      while (leaferInstances.length) {
+        const leafer = leaferInstances.pop();
+        try { leafer.destroy(); } catch (e) { /* 忽略 */ }
+      }
+    }
+
+    /** 把解析结果的结构渲染为可读文本（含嵌套与 fill / stroke 摘要） */
+    function describe(node, depth = 0) {
+      const indent = '  '.repeat(depth);
+      let line = indent + node.tag;
+      const details = [];
+      if (node.rotation) details.push('rotation ' + Math.round(node.rotation * 10) / 10 + '°');
+      if (node.scaleX !== 1 || node.scaleY !== 1) {
+        details.push('scale ' + Math.round(node.scaleX * 100) / 100 + ',' + Math.round(node.scaleY * 100) / 100);
+      }
+      if (node.opacity !== 1) details.push('opacity ' + node.opacity);
+      if (typeof node.fill === 'object' && node.fill) details.push('fill<gradient>');
+      if (details.length) line += ' (' + details.join(', ') + ')';
+
+      const lines = [line];
+      if (node.children && node.children.length) {
+        node.children.forEach((child) => lines.push(describe(child, depth + 1)));
+      }
+      return lines.join('\n');
+    }
+
+    function run() {
+      try {
+        runInner();
+      } catch (e) {
+        showError('运行失败：' + (e && e.message ? e.message : String(e)));
+      }
+    }
+
+    function runInner() {
+      const svg = input.value.trim();
+      clearLeafers();
+      showError('');
+      document.getElementById('nativeBox').innerHTML = '';
+      document.getElementById('flatBox').innerHTML = '';
+      document.getElementById('hierBox').innerHTML = '';
+      document.getElementById('flatInfo').textContent = '结构：-';
+      document.getElementById('hierInfo').textContent = '结构：-';
+
+      if (!svg) {
+        showError('SVG 字符串为空');
+        return;
+      }
+
+      // 语法预检：DOMParser 对无效 XML 会生成 parsererror 文档
+      const parsed = new DOMParser().parseFromString(svg, 'text/xml');
+      const parseError = parsed.querySelector('parsererror');
+      if (parseError) {
+        showError('SVG 语法错误：\n' + (parseError.textContent || '').trim().slice(0, 300));
+        return;
+      }
+      const rootTag = parsed.documentElement ? parsed.documentElement.tagName.replace(/^svg:/i, '') : '';
+      if (rootTag !== 'svg') {
+        showError('根元素必须是 <svg>，当前为 <' + (rootTag || '空文档') + '>');
+        return;
+      }
+
+      // 1. 浏览器原生渲染（基准）
+      document.getElementById('nativeBox').innerHTML = svg;
+
+      // 2 / 3. leafer 解析
+      const modes = [
+        { boxId: 'flatBox', infoId: 'flatInfo', flatten: true },
+        { boxId: 'hierBox', infoId: 'hierInfo', flatten: false },
+      ];
+      const errors = [];
+
+      for (const { boxId, infoId, flatten } of modes) {
+        const box = document.getElementById(boxId);
+        const info = document.getElementById(infoId);
+        const label = flatten ? '扁平化解析' : '层级化解析';
+        try {
+          const group = LeaferXSvg.parse(svg, { flatten });
+          if (!group) {
+            info.textContent = '结构：（无有效图形元素）';
+            errors.push(label + '：SVG 中没有可解析的图形元素');
+            continue;
+          }
+          const width = box.clientWidth || 400;
+          const leafer = new LeaferUI.Leafer({
+            view: box,
+            width,
+            height: 360,
+            fill: '#fff',
+          });
+          leafer.add(group);
+          leaferInstances.push(leafer);
+          info.textContent = '结构：\n' + describe(group);
+        } catch (e) {
+          info.textContent = '结构：-';
+          errors.push(label + '失败：' + (e && e.message ? e.message : String(e)));
+        }
+      }
+
+      if (errors.length) showError(errors.join('\n'));
+    }
+
+    // 全局异常也显示到错误框，避免白屏
+    window.addEventListener('error', (e) => {
+      showError('脚本异常：' + (e.message || '未知错误'));
+    });
+
+    document.getElementById('runBtn').addEventListener('click', run);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      input.value = DEFAULT_SVG;
+      run();
+    });
+    input.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        run();
+      }
+    });
+
+    input.value = DEFAULT_SVG;
+    run();
+  </script>
+</body>
+
+</html>

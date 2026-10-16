@@ -1,0 +1,45 @@
+{
+  "name": "leafer-x-svg",
+  "version": "0.1.0",
+  "description": "Parse SVG strings into Leafer UI objects. Ported from the fabric.js SVG parser.",
+  "type": "module",
+  "main": "./dist/leafer-x-svg.umd.cjs",
+  "module": "./dist/leafer-x-svg.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/leafer-x-svg.js",
+      "require": "./dist/leafer-x-svg.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "svg",
+    "leafer",
+    "leafer-ui",
+    "leaferjs",
+    "parser",
+    "canvas",
+    "fabric"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "leafer-ui": ">=1.0.0"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "leafer-ui": "~2.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.5.0"
+  }
+}
