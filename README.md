@@ -51,17 +51,11 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <path d="M10 80 L50 80 L30 50 Z" fill="red"/>
 </svg>`;
 
-// 扁平化解析（默认）
+// SVG 字符串 → Leafer 对象，扁平化解析（默认）
 const group = parse(svg);
 
 // 层级化解析（保留 <g> 嵌套，映射为嵌套 Group）
 const nested = parse(svg, { flatten: false });
-
-// 覆盖填充色 / 设置类名
-const icon = parse(svg, { 
-  // 是否扁平化解析结果
-  flatten: true,
- });
 
 // 直接添加到 Leafer 画布
 const leafer = new Leafer({ view: window });
