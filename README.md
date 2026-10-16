@@ -1,8 +1,8 @@
 # leafer-x-svg
 
-> Parse SVG strings into Leafer UI objects — a lightweight SVG parser for [LeaferJS](https://www.leaferjs.com/), ported from the [fabric.js](https://github.com/fabricjs/fabric.js) SVG parser.
+> 一个轻量的支持[LeaferJS](https://www.leaferjs.com/)对象和svg相互转换的库
 
-`leafer-x-svg` 将 SVG 字符串解析为 LeaferUI 的可视化对象（`Group` / `Path` / `Rect` / `Ellipse` / `Line` / `Polygon` / `Text` / `Image`），解析结果可直接添加到 Leafer 画布中渲染，适合图标导入、素材编辑器、白板等场景。
+`leafer-x-svg` 将 SVG 字符串`parse`解析为 LeaferUI 的可视化对象（`Group` / `Path` / `Rect` / `Ellipse` / `Line` / `Polygon` / `Text` / `Image`），解析结果可直接添加到 Leafer 画布中渲染，适合图标导入、素材编辑器、白板等场景。
 
 同时也提供反向能力 `formate`：把 Leafer 对象序列化回 SVG 字符串，可与 `parse` 组成「SVG ⇄ Leafer」双向转换。无 SVG 对应语义的能力会**降级处理**（几何近似为 `path` 等），降级不了的直接**舍弃**，并把每次降级 / 舍弃记录到结果中（详见 [Leafer → SVG（formate）](#leafer--svgformate)）。
 
@@ -42,7 +42,7 @@ npm install leafer-ui
 ### ESM
 
 ```ts
-import { parse } from 'leafer-x-svg';
+import { parse, formate } from 'leafer-x-svg';
 import { Leafer } from 'leafer-ui';
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -58,37 +58,23 @@ const group = parse(svg);
 const nested = parse(svg, { flatten: false });
 
 // 覆盖填充色 / 设置类名
-const icon = parse(svg, { fill: 'currentColor', className: 'icon' });
+const icon = parse(svg, { 
+  // 是否扁平化解析结果
+  flatten: true,
+ });
 
 // 直接添加到 Leafer 画布
 const leafer = new Leafer({ view: window });
 leafer.add(group);
 
 // 反向：Leafer 对象 → SVG 字符串
-const { svg: svgString, degrades } = formate(group);
-```
-
-### Leafer 对象 → SVG
-
-```ts
-import { formate } from 'leafer-x-svg';
-import { Group, Rect, Text } from 'leafer-ui';
-
-const group = new Group({
-  children: [
-    new Rect({ width: 100, height: 50, cornerRadius: 8, fill: 'blue' }),
-    new Text({ text: 'Hello', x: 10, y: 20, fontSize: 18, fill: '#222' }),
-  ],
-});
-
-const { svg, degrades } = formate(group, {
+const { svg: svgString, degrades } = formate(group, {
   precision: 3,        // 小数位数，默认 4
   pretty: true,        // 缩进换行，默认 true
   includeReport: true, // 把降级记录写入 SVG 注释，默认 true
 });
 
-console.log(svg);
-console.log(degrades); // [{ at: '...', action: 'degrade' | 'skip', detail: '...' }, ...]
+console.log(svgString);
 ```
 
 ### UMD / CDN
@@ -437,7 +423,7 @@ Copy-Item dist/leafer-x-svg.umd.cjs examples/   # Windows PowerShell；macOS/Lin
 
 ## 致谢
 
-- [fabric.js](https://github.com/fabricjs/fabric.js) — 本项目的 SVG 解析核心移植自 fabric.js（MIT License, Copyright (c) 2008-2025 Fabric contributors）
+- [fabric.js](https://github.com/fabricjs/fabric.js) — 本项目的parse中解析svg逻辑参考自 fabric.js（MIT License, Copyright (c) 2008-2025 Fabric contributors）
 - [LeaferUI](https://github.com/leaferjs/leafer-ui) — 强大的开源 Canvas 引擎
 
 ## License
