@@ -1,6 +1,6 @@
 # leafer-x-svg
 
-> 一个轻量的支持[LeaferJS](https://www.leaferjs.com/)对象和svg相互转换的库
+> 零依赖，轻量，支持[LeaferJS](https://www.leaferjs.com/)对象和svg双向转换
 
 `leafer-x-svg` 将 SVG 字符串`parse`解析为 LeaferUI 的可视化对象（`Group` / `Path` / `Rect` / `Ellipse` / `Line` / `Polygon` / `Text` / `Image`），解析结果可直接添加到 Leafer 画布中渲染，适合图标导入、素材编辑器、白板等场景。
 

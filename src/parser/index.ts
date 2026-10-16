@@ -2,7 +2,6 @@
  * svg 转 leaferjs 对象，移植于 fabric.js 项目
  * https://github.com/fabricjs/fabric.js/tree/master/src/parser
  */
-import { v4 as uuid } from 'uuid';
 import { Group, Path, Polygon, Rect, Line, Ellipse, Text, Image } from 'leafer-ui';
 import type { UI, IFill, IStroke, ITextAlign } from 'leafer-ui';
 
@@ -169,6 +168,25 @@ function parse(
 
   if (!group.children.length) return;
   return group;
+}
+
+function uuid(): string {
+  const bytes = new Uint8Array(16);
+
+  // 填充随机字节（Math.random）
+  for (let i = 0; i < 16; i++) {
+    bytes[i] = Math.floor(Math.random() * 256);
+  }
+
+  // RFC4122：版本4，第6字节高4位 = 0100
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  // RFC4122：变体，第8字节高2位 = 10
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  // 转16进制，不足两位前面补0
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0'));
+
+  return `${hex[0]}${hex[1]}${hex[2]}${hex[3]}-${hex[4]}${hex[5]}-${hex[6]}${hex[7]}-${hex[8]}${hex[9]}-${hex[10]}${hex[11]}${hex[12]}${hex[13]}${hex[14]}${hex[15]}`;
 }
 
 /** 递归遍历子元素：叶子构建为 Leafer 对象，容器按模式建组或摊平 */

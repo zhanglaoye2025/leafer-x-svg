@@ -146,7 +146,6 @@
     .box svg {
       display: block;
       width: 100%;
-      height: auto;
     }
 
     .col pre {
@@ -161,6 +160,54 @@
       overflow: auto;
       white-space: pre-wrap;
     }
+
+    /* ---- Leafer → SVG（formate）反向示例 ---- */
+    .section-title {
+      font-size: 16px;
+      margin: 24px 0 4px;
+      padding-top: 18px;
+      border-top: 1px dashed #c5cdd4;
+    }
+
+    .formate-panels {
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .formate-panels .col {
+      flex: 1 1 480px;
+      min-width: 340px;
+    }
+
+    .canvas-box {
+      background: #fff;
+      border: 1px solid #d5dbe0;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 360px;
+    }
+
+    .formate-panels .col pre {
+      margin: 8px 0 0;
+      max-height: 340px;
+      white-space: pre;
+    }
+
+    .code-block {
+      margin-top: 8px;
+      padding: 12px;
+      background: #1e2b38;
+      border: 1px solid #16202a;
+      border-radius: 8px;
+      color: #d8dee9;
+      font: 12px/1.6 Consolas, Monaco, monospace;
+      max-height: 340px;
+      overflow: auto;
+      white-space: pre;
+      tab-size: 2;
+    }
   </style>
 </head>
 
@@ -170,6 +217,7 @@
   <p class="tip">
     在下方编辑或粘贴自定义 SVG 字符串，点击「运行」（或 <code>Ctrl + Enter</code>）后，
     三栏分别展示：浏览器原生渲染（基准）、<code>flatten: true</code> 扁平化解析、<code>flatten: false</code> 层级化解析。
+    页面下方的反向示例则展示 <code>formate</code>：把 Leafer 对象序列化回 SVG 字符串。
   </p>
 
   <div class="editor">
@@ -197,6 +245,25 @@
       <h2>3. 层级化解析<small>parse(svg, { flatten: false })</small></h2>
       <div class="box" id="hierBox"></div>
       <pre id="hierInfo">结构：-</pre>
+    </div>
+  </div>
+
+  <h2 class="section-title">反向示例：Leafer 对象 → SVG 字符串（<code>formate</code>）</h2>
+  <p class="tip">
+    用 LeaferUI 对象搭出一个画布场景，调用 <code>formate(leaferTree)</code> 序列化回 SVG 字符串：
+    左侧是 Leafer 画布的实时渲染与构建它的代码，右侧是格式化结果的 SVG 预览与 SVG 字符串。
+  </p>
+
+  <div class="formate-panels">
+    <div class="col">
+      <h2>1. Leafer 画布<small>LeaferUI 对象实时渲染</small></h2>
+      <div class="canvas-box" id="formateCanvas"></div>
+      <pre class="code-block" id="formateCode"></pre>
+    </div>
+    <div class="col">
+      <h2>2. 格式化 SVG<small>预览（由序列化结果内联渲染）</small></h2>
+      <div class="box" id="formatePreview" style="max-height: 340;"></div>
+      <pre id="formateSvg">-</pre>
     </div>
   </div>
 
@@ -362,8 +429,140 @@
       }
     });
 
+    // ===== Leafer 对象 → SVG 字符串（formate）反向示例 =====
+    const FORMATE_CODE = `const U = LeaferUI;
+
+// 1. 用 LeaferUI 对象搭一个画布场景
+const rect = new U.Rect({
+  x: 24, y: 40, width: 96, height: 64,
+  fill: '#e74c3c', stroke: '#922b21',
+  strokeWidth: 4, strokeCap: 'round', dashPattern: [10, 6],
+  cornerRadius: 10, rotation: 12, opacity: 0.95,
+});
+const ellipse = new U.Ellipse({
+  x: 176, y: 72, width: 92, height: 64,
+  fill: { type: 'radial', stops: [
+    { offset: 0, color: '#a1c4fd' },
+    { offset: 1, color: '#2471a3' },
+  ] },
+});
+const poly = new U.Polygon({
+  x: 24, y: 148, sides: 6, width: 72, height: 72,
+  fill: '#f39c12', stroke: '#7e5109', strokeWidth: 3,
+});
+const line = new U.Line({
+  x: 168, y: 148, width: 150, rotation: 24,
+  stroke: '#16a085', strokeWidth: 6, strokeCap: 'round',
+});
+const path = new U.Path({
+  x: 24, y: 230,
+  path: 'M0 64 C 24 0, 72 0, 96 64 S 168 128, 192 64',
+  stroke: '#8e44ad', strokeWidth: 6,
+});
+const text = new U.Text({
+  x: 168, y: 244, text: 'Leafer → SVG',
+  fontSize: 24, fontWeight: 'bold', fill: '#2c3e50',
+});
+const tree = new U.Group({ children: [rect, ellipse, poly, line, path, text] });
+
+// 2. 挂到 Leafer 画布实时渲染
+const leafer = new U.Leafer({ view: box, width: 440, height: 340, fill: '#fff' });
+leafer.add(tree);
+
+// 3. 序列化回 SVG 字符串
+const { svg, degrades } = LeaferXSvg.formate(tree, { pretty: true });`;
+
+    let formateLeafer = null;
+
+    function renderFormateExample() {
+      const canvasBox = document.getElementById('formateCanvas');
+      const previewBox = document.getElementById('formatePreview');
+      const svgEl = document.getElementById('formateSvg');
+
+      document.getElementById('formateCode').textContent = FORMATE_CODE;
+      previewBox.innerHTML = '';
+      if (formateLeafer) {
+        try { formateLeafer.destroy(); } catch (e) { /* 忽略 */ }
+        formateLeafer = null;
+      }
+
+      try {
+        const U = LeaferUI;
+
+        // 1. 用 LeaferUI 对象搭一个画布场景
+        const rect = new U.Rect({
+          x: 24, y: 40, width: 96, height: 64,
+          fill: '#e74c3c', stroke: '#922b21',
+          strokeWidth: 4, strokeCap: 'round', dashPattern: [10, 6],
+          cornerRadius: 10, rotation: 12, opacity: 0.95,
+        });
+        const ellipse = new U.Ellipse({
+          x: 176, y: 72, width: 92, height: 64,
+          fill: {
+            type: 'radial',
+            stops: [
+              { offset: 0, color: '#a1c4fd' },
+              { offset: 1, color: '#2471a3' },
+            ],
+          },
+        });
+        const poly = new U.Polygon({
+          x: 24, y: 148, sides: 6, width: 72, height: 72,
+          fill: '#f39c12', stroke: '#7e5109', strokeWidth: 3,
+        });
+        const line = new U.Line({
+          x: 168, y: 148, width: 150, rotation: 24,
+          stroke: '#16a085', strokeWidth: 6, strokeCap: 'round',
+        });
+        const path = new U.Path({
+          x: 24, y: 230,
+          path: 'M0 64 C 24 0, 72 0, 96 64 S 168 128, 192 64',
+          stroke: '#8e44ad', strokeWidth: 6,
+        });
+        const text = new U.Text({
+          x: 168, y: 244, text: 'Leafer → SVG',
+          fontSize: 24, fontWeight: 'bold', fill: '#2c3e50',
+        });
+        const tree = new U.Group({ children: [rect, ellipse, poly, line, path, text] });
+
+        // 2. 挂到 Leafer 画布实时渲染
+        const width = canvasBox.clientWidth || 440;
+        formateLeafer = new U.Leafer({
+          view: canvasBox,
+          width,
+          fill: '#fff',
+        });
+        formateLeafer.add(tree);
+
+        // 3. 布局就绪后序列化回 SVG 字符串（保证包围盒已计算）
+        const applyFormate = () => {
+          try {
+            const { svg, degrades } = LeaferXSvg.formate(tree, { pretty: true });
+            svgEl.textContent = svg || '（无输出）';
+            if (degrades && degrades.length) {
+              svgEl.textContent += '\n\n<!-- 降级 / 舍弃记录 -->\n' + degrades
+                .map((d) => `- [${d.action}] ${d.at}${d.tag ? ' <' + d.tag + '>' : ''}: ${d.detail}`)
+                .join('\n');
+            }
+            previewBox.innerHTML = svg;
+          } catch (e) {
+            const message = 'formate 失败：' + (e && e.message ? e.message : String(e));
+            svgEl.textContent = message;
+            showError(message);
+          }
+        };
+        if (formateLeafer.ready) applyFormate();
+        else formateLeafer.on(U.LeaferEvent.AFTER_READY, applyFormate);
+      } catch (e) {
+        const message = 'formate 示例失败：' + (e && e.message ? e.message : String(e));
+        svgEl.textContent = message;
+        showError((errorBox.textContent ? errorBox.textContent + '\n' : '') + message);
+      }
+    }
+
     input.value = DEFAULT_SVG;
     run();
+    renderFormateExample();
   </script>
 </body>
 
